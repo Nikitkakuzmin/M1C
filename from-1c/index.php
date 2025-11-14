@@ -9,19 +9,18 @@ $error = '';
 $imageDataUri = null;
 
 if ($itemCode !== '') {
-    // Формируем URL: base /hs/JP/JewPhoto/?JewelCode=XXX
-    $url = rtrim($config['onec_url'], '/'); // на случай, если в config нет слэша
-    $url .= '?JewelCode=' . urlencode($itemCode);
+    // Формируем URL: .../hs/JP/JewPhoto/?JewelCode=XXX
+    $base = rtrim($config['onec_url'], '/'); // на случай, если слэш лишний
+    $url  = $base . '?JewelCode=' . urlencode($itemCode);
 
-    // Готовим запрос в 1С через cURL
+    // Запрос в 1С через cURL БЕЗ авторизации
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_USERPWD        => $config['onec_login'] . ':' . $config['onec_password'],
-        CURLOPT_HTTPAUTH       => CURLAUTH_BASIC,
         CURLOPT_HEADER         => false,
+        // НИКАКОГО CURLOPT_USERPWD, НИКАКОГО HTTPAUTH
     ]);
 
     $response = curl_exec($ch);
@@ -33,8 +32,8 @@ if ($itemCode !== '') {
         if ($httpCode !== 200) {
             $error = '1С вернул статус ' . $httpCode;
         } else {
-            // Тут бинарная картинка
-            // Для простоты считаем, что это JPEG (можно поменять на image/png)
+            // Здесь бинарная картинка
+            // Для простоты считаем, что это JPEG (при необходимости поменяешь на image/png)
             $mime = 'image/jpeg';
             $imageDataUri = 'data:' . $mime . ';base64,' . base64_encode($response);
         }
@@ -50,7 +49,7 @@ if ($itemCode !== '') {
     <title>Фото из 1С по JewelCode</title>
 </head>
 <body>
-    <h1>Фото из 1С</h1>
+    <h1>Фото из 1С (без авторизации)</h1>
 
     <form method="get">
         <label>
